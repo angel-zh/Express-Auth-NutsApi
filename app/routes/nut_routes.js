@@ -27,10 +27,34 @@ const requireToken = passport.authenticate('bearer', { session: false })
 // instantiate a router (mini app that only handles routes)
 const router = express.Router()
 
+// Index
+// /nuts
+router.get('/nuts', requireToken, (req, res, next) => {
+    Nut.find()
+        .then(nuts => {
+            return nuts.map(nut => nut)
+        })
+        .then(nuts =>  {
+            res.status(200).json({ nuts: nuts })
+        })
+        .catch(next)
+})
+
+//Show
+// /nuts/:id
+router.get('/nuts/:id', requireToken, (req, res, next) => {
+    Nut.findById(req.params.id)
+    .then(handle404)
+    .then(nut => {
+        res.status(200).json({ nut: nut })
+    })
+    .catch(next)
+
+})
 
 // Create
 // POST /nuts
-// has to have a token attached to the user (meaning they're authenticated) in order to create a pet
+// has to have a token attached to the user (meaning they're authenticated) in order to create a nut
 router.post('/nuts', requireToken, (req, res, next) => {
     req.body.nut.owner = req.user.id
 
@@ -44,5 +68,36 @@ router.post('/nuts', requireToken, (req, res, next) => {
     .catch(next)
 })
 
+// Update
+// /nuts/:id
+router.patch('/nuts/:id', requireToken, removeBlanks, (req, res, next) => {
+    delete req.body.nut.owner
 
+    Nut.findById(req.params.id)
+    .then(handle404)
+    .then(nut => {
+        requireOwnership(req, nut)
+
+        return nut.updateOne(req.body.nut)
+    })
+    .then(() => res.sendStatus(204))
+    .catch(next)
+
+})
+
+
+// Destroy
+// DELETE /nuts/:id
+router.delete('/nuts/:id', requireToken, (req, res, next) => {
+	Nut.findById(req.params.id)
+		.then(handle404)
+		.then(nut => {
+			requireOwnership(req, nut)
+			nut.deleteOne()
+		})
+		.then(() => res.sendStatus(204))
+		.catch(next)
+})
+
+module.exports = router
 module.exports = router
