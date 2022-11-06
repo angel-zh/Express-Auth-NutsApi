@@ -29,7 +29,7 @@ const router = express.Router()
 
 // Index
 // /nuts
-router.get('/nuts', requireToken, (req, res, next) => {
+router.get('/nuts', (req, res, next) => {
     Nut.find()
         .then(nuts => {
             return nuts.map(nut => nut)
